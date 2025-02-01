@@ -15,10 +15,11 @@ load_dotenv()
 # Change to your own chrome data directory
 user_data_dir = "C:/Users/alexa/AppData/Local/Google/Chrome/User Data"
 
-profile = "Profile 1"
 
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument(f"--user-data-dir={user_data_dir}")
+
+profile = "."
 chrome_options.add_argument(f"--profile-directory={profile}")
 
 driver = webdriver.Chrome(
@@ -29,6 +30,24 @@ driver.get("https://web.whatsapp.com/")
 
 # Add a delay to allow the site to finish loading
 time.sleep(5)  # Adjust the number of seconds as needed
+
+# Loop to check for QR code
+qr_code_present = True
+while qr_code_present:
+    try:
+        # Try to find the QR code element
+        driver.find_element(
+            By.XPATH, "//canvas[@aria-label='Scan this QR code to link a device!']"
+        )
+        print("Waiting for QR code to be scanned...")
+        time.sleep(2)  # Wait a bit before checking again
+    except Exception:
+        # If the element is not found, assume the QR code has been scanned
+        qr_code_present = False
+        print("QR code scanned, proceeding...")
+
+        # Add a delay to allow the site to finish loading
+        time.sleep(5)  # Adjust the number of seconds as needed
 
 # Find the group chat by its name
 group_name = "Oh Yea"
@@ -59,14 +78,14 @@ while len(messages) < 5:
 # input("Press Enter to continue...")
 driver.quit()
 
-# %%
+# %% Process messages
 messageTags: list[ResultSet[Tag]] = [
     m.select("span.selectable-text span") for m in messages
 ]
 texts: list[str] = ["".join([t.text for t in ts]) for ts in messageTags]
 texts
 
-# %%
+# %% Saving messages to file
 with open("messages.txt", "w", encoding="utf-8") as file:
     for text in texts:
         file.write(text + "\n")
